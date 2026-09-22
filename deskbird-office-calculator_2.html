@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deskbird Office Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,420;9..144,560&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light dark;
+    --paper: #eef1ee;
+    --surface: #ffffff;
+    --ink: #16211c;
+    --ink-muted: #5c6b62;
+    --line: #d7ddd6;
+    --accent: #1f7a5c;
+    --accent-strong: #124a38;
+    --accent-soft: #dcefe6;
+    --warn: #a83b1d;
+    --warn-soft: #f7e4dd;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper: #0f1512;
+      --surface: #17201b;
+      --ink: #eef2ee;
+      --ink-muted: #9db0a5;
+      --line: #2a332c;
+      --accent: #52dba8;
+      --accent-strong: #8ff0c8;
+      --accent-soft: rgba(82,219,168,0.14);
+      --warn: #ff9270;
+      --warn-soft: rgba(255,146,112,0.12);
+    }
+  }
+
+  *{ box-sizing: border-box; }
+  html, body{ height: auto; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Libre Franklin", ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    padding: 40px 20px 64px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page{
+    max-width: 620px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .eyebrow{
+    font-family: "Libre Franklin", sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+  h1{
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 560;
+    font-size: clamp(28px, 6vw, 38px);
+    line-height: 1.08;
+    margin: 6px 0 8px;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  .lede{
+    color: var(--ink-muted);
+    font-size: 15px;
+    max-width: 46ch;
+  }
+
+  .base-strip{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .base-strip .label{
+    font-size: 13px;
+    color: var(--ink-muted);
+    font-weight: 600;
+  }
+  .base-strip .value{
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 26px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .base-strip .value small{
+    font-family: "Libre Franklin", sans-serif;
+    font-size: 13px;
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+  details.explain{
+    margin-top: -6px;
+  }
+  details.explain summary{
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--accent-strong);
+    font-weight: 600;
+    list-style: none;
+    user-select: none;
+  }
+  details.explain summary::-webkit-details-marker{ display:none; }
+  details.explain summary::before{
+    content: "how this is worked out ";
+  }
+  details.explain[open] summary::before{
+    content: "hide the working ";
+  }
+  .explain-body{
+    margin-top: 10px;
+    padding: 14px 16px;
+    background: var(--paper);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    font-size: 13.5px;
+    color: var(--ink-muted);
+    display: grid;
+    gap: 6px;
+  }
+  .explain-body .row{
+    display:flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .explain-body .row span:first-child{ color: var(--ink); }
+  .explain-body hr{
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 2px 0;
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+  }
+  .card h2{
+    font-family: "Libre Franklin", sans-serif;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    margin: 0 0 16px;
+    font-weight: 700;
+  }
+  .field{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 0;
+  }
+  .field + .field{
+    border-top: 1px solid var(--line);
+  }
+  .field label{
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .field .hint{
+    display:block;
+    font-weight: 400;
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+  }
+  .stepper{
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--paper);
+    flex-shrink: 0;
+  }
+  .stepper button{
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: var(--accent-strong);
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .stepper button:hover{ background: var(--accent-soft); }
+  .stepper button:focus-visible, .stepper input:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .stepper input{
+    width: 52px;
+    height: 36px;
+    border: none;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    text-align: center;
+    font-family: "Libre Franklin", sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    background: var(--surface);
+    color: var(--ink);
+    -moz-appearance: textfield;
+  }
+  .stepper input::-webkit-outer-spin-button,
+  .stepper input::-webkit-inner-spin-button{
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .warning{
+    display:none;
+    align-items: center;
+    gap: 8px;
+    background: var(--warn-soft);
+    color: var(--warn);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+  .warning.show{ display:flex; }
+
+  .result{
+    background: linear-gradient(180deg, var(--accent-soft), transparent 70%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 24px 24px;
+    text-align: center;
+  }
+  .result .label{
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-strong);
+  }
+  .result .number{
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(56px, 16vw, 80px);
+    line-height: 1;
+    margin: 10px 0 2px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .result .number .unit{
+    font-family: "Libre Franklin", sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    margin-left: 4px;
+  }
+  .result .sub{
+    font-size: 13.5px;
+    color: var(--ink-muted);
+  }
+
+  .receipt{
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+    display: grid;
+    gap: 6px;
+    font-size: 13.5px;
+    text-align: left;
+  }
+  .receipt .row{
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .receipt .row .amt{ color: var(--ink); font-weight: 600; }
+  .receipt .row.final{
+    color: var(--ink);
+    font-weight: 700;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+  }
+  .receipt .row.final .amt{ color: var(--accent-strong); }
+
+  .bar{
+    height: 8px;
+    border-radius: 999px;
+    background: var(--line);
+    overflow: hidden;
+    margin-top: 16px;
+  }
+  .bar-fill{
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.25s ease;
+  }
+  .bar-caption{
+    display:flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-top: 6px;
+  }
+
+  footer{
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    text-align: center;
+    padding-top: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div>
+    <div class="eyebrow">1 Sep – 31 Dec 2026 · Hybrid working policy</div>
+    <h1>Deskbird office calculator</h1>
+    <p class="lede">Work out how many days you're required in the office for the rest of the period, once your annual leave and working‑from‑elsewhere days are taken into account.</p>
+  </div>
+
+  <div class="base-strip">
+    <div>
+      <div class="label">Fixed maximum working days</div>
+      <details class="explain"><summary></summary>
+        <div class="explain-body">
+          <div class="row"><span>Weekdays, 1 Sep – 31 Dec 2026</span><span>88</span></div>
+          <div class="row"><span>Less: Christmas Day (Fri 25 Dec)</span><span>&minus;1</span></div>
+          <div class="row"><span>Less: Boxing Day substitute (Mon 28 Dec)</span><span>&minus;1</span></div>
+          <hr>
+          <div class="row"><span>Fixed maximum working days</span><span id="explainTotal">86</span></div>
+        </div>
+      </details>
+    </div>
+    <div class="value" id="baseValue">86<small> days</small></div>
+  </div>
+
+  <div class="card">
+    <h2>Your days for the period</h2>
+    <div class="field">
+      <label for="leaveInput">Annual leave
+        <span class="hint">Booked or taken, 1 Sep – 31 Dec</span>
+      </label>
+      <div class="stepper">
+        <button type="button" data-target="leaveInput" data-step="-1" aria-label="Decrease annual leave">&minus;</button>
+        <input id="leaveInput" type="number" inputmode="numeric" min="0" max="86" step="1" value="5">
+        <button type="button" data-target="leaveInput" data-step="1" aria-label="Increase annual leave">+</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="wfeInput">Working from elsewhere
+        <span class="hint">Approved remote days, 1 Sep – 31 Dec</span>
+      </label>
+      <div class="stepper">
+        <button type="button" data-target="wfeInput" data-step="-1" aria-label="Decrease working from elsewhere days">&minus;</button>
+        <input id="wfeInput" type="number" inputmode="numeric" min="0" max="86" step="1" value="5">
+        <button type="button" data-target="wfeInput" data-step="1" aria-label="Increase working from elsewhere days">+</button>
+      </div>
+    </div>
+    <div class="warning" id="warningBox">Leave + working from elsewhere adds up to more than the 86 available days — remaining working days is floored at 0.</div>
+  </div>
+
+  <div class="card">
+    <h2>Progress</h2>
+    <div class="field">
+      <label for="completedInput">Office days completed
+        <span class="hint">Confirmed as done, 1 Sep – 31 Dec</span>
+      </label>
+      <div class="stepper">
+        <button type="button" data-target="completedInput" data-step="-1" aria-label="Decrease completed office days">&minus;</button>
+        <input id="completedInput" type="number" inputmode="numeric" min="0" max="86" step="1" value="0">
+        <button type="button" data-target="completedInput" data-step="1" aria-label="Increase completed office days">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="result">
+    <div class="label">Office days still required</div>
+    <div class="number"><span id="officeResult">31</span><span class="unit">days</span></div>
+    <div class="sub" id="officeSub">0 of 31 required days completed so far</div>
+
+    <div class="bar"><div class="bar-fill" id="barFill" style="width: 0%"></div></div>
+    <div class="bar-caption">
+      <span id="barLeftLabel">0 completed</span>
+      <span id="barRightLabel">of 31 required</span>
+    </div>
+
+    <div class="receipt">
+      <div class="row"><span>Fixed maximum working days</span><span class="amt" id="rBase">86</span></div>
+      <div class="row"><span>&minus; Annual leave</span><span class="amt" id="rLeave">5</span></div>
+      <div class="row"><span>&minus; Working from elsewhere</span><span class="amt" id="rWfe">5</span></div>
+      <div class="row"><span>= Remaining working days</span><span class="amt" id="rRemaining">76</span></div>
+      <div class="row"><span>Required office days (40%, rounded up)</span><span class="amt" id="rGross">31</span></div>
+      <div class="row"><span>&minus; Office days completed</span><span class="amt" id="rCompleted">0</span></div>
+      <div class="row final"><span>Still required</span><span class="amt" id="rFinal">31</span></div>
+    </div>
+  </div>
+
+  <footer>Fixed base recalculated for 1 Sep – 31 Dec 2026 · UK bank holidays (England &amp; Wales)</footer>
+</div>
+
+<script>
+(function(){
+  var FIXED_MAX = 86;
+  var RATE = 0.4;
+
+  var leaveInput = document.getElementById('leaveInput');
+  var wfeInput = document.getElementById('wfeInput');
+  var completedInput = document.getElementById('completedInput');
+  var warningBox = document.getElementById('warningBox');
+
+  function clampInt(v, min, max){
+    v = Math.round(Number(v));
+    if (isNaN(v)) v = 0;
+    if (v < min) v = min;
+    if (v > max) v = max;
+    return v;
+  }
+
+  function loadSaved(){
+    try{
+      var saved = JSON.parse(localStorage.getItem('deskbird-calc') || 'null');
+      if (saved && typeof saved.leave === 'number' && typeof saved.wfe === 'number'){
+        leaveInput.value = saved.leave;
+        wfeInput.value = saved.wfe;
+      }
+      if (saved && typeof saved.completed === 'number'){
+        completedInput.value = saved.completed;
+      }
+    }catch(e){ /* ignore, defaults already in markup */ }
+  }
+
+  function saveState(leave, wfe, completed){
+    try{
+      localStorage.setItem('deskbird-calc', JSON.stringify({ leave: leave, wfe: wfe, completed: completed }));
+    }catch(e){ /* per-viewer convenience only */ }
+  }
+
+  function recalc(){
+    var leaveRaw = clampInt(leaveInput.value, 0, FIXED_MAX);
+    var wfeRaw = clampInt(wfeInput.value, 0, FIXED_MAX);
+    var completedRaw = clampInt(completedInput.value, 0, FIXED_MAX);
+    leaveInput.value = leaveRaw;
+    wfeInput.value = wfeRaw;
+    completedInput.value = completedRaw;
+
+    var overBudget = (leaveRaw + wfeRaw) > FIXED_MAX;
+    warningBox.classList.toggle('show', overBudget);
+
+    var remaining = Math.max(0, FIXED_MAX - leaveRaw - wfeRaw);
+    var grossRequired = Math.ceil(remaining * RATE);
+    var stillRequired = Math.max(0, grossRequired - completedRaw);
+    var targetMet = grossRequired > 0 && completedRaw >= grossRequired;
+
+    document.getElementById('officeResult').textContent = stillRequired;
+    document.getElementById('rBase').textContent = FIXED_MAX;
+    document.getElementById('rLeave').textContent = leaveRaw;
+    document.getElementById('rWfe').textContent = wfeRaw;
+    document.getElementById('rRemaining').textContent = remaining;
+    document.getElementById('rGross').textContent = grossRequired;
+    document.getElementById('rCompleted').textContent = completedRaw;
+    document.getElementById('rFinal').textContent = stillRequired;
+
+    var subText;
+    if (grossRequired === 0){
+      subText = 'No office days required for the days you’ve entered';
+    } else if (targetMet){
+      subText = 'Target met — ' + completedRaw + ' of ' + grossRequired + ' required days completed';
+    } else {
+      subText = completedRaw + ' of ' + grossRequired + ' required days completed so far';
+    }
+    document.getElementById('officeSub').textContent = subText;
+
+    var pct = grossRequired > 0 ? Math.min(100, (completedRaw / grossRequired) * 100) : 100;
+    document.getElementById('barFill').style.width = pct + '%';
+    document.getElementById('barLeftLabel').textContent = completedRaw + ' completed';
+    document.getElementById('barRightLabel').textContent = 'of ' + grossRequired + ' required';
+
+    saveState(leaveRaw, wfeRaw, completedRaw);
+  }
+
+  document.querySelectorAll('.stepper button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var target = document.getElementById(btn.getAttribute('data-target'));
+      var step = Number(btn.getAttribute('data-step'));
+      target.value = clampInt(Number(target.value || 0) + step, 0, FIXED_MAX);
+      recalc();
+    });
+  });
+
+  [leaveInput, wfeInput, completedInput].forEach(function(input){
+    input.addEventListener('input', recalc);
+    input.addEventListener('blur', recalc);
+  });
+
+  loadSaved();
+  recalc();
+})();
+</script>
+</body>
+</html>
